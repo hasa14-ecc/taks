@@ -43,21 +43,11 @@ jobs:
             docker run --network=isolated -d -p 4444:4444 -p 7900:7900 \
             -v /dev/shm:/dev/shm --name selenium \
             selenium/standalone-chrome:latest
-          else
-            docker run --network=isolated -d -p 4444:4444 -p 7900:7900 \
-            -v /dev/shm:/dev/shm --name selenium \
-            selenium/standalone-edge:latest
-          fi
-
-
-      - name: Wait for Selenium Hub
-        run: sh wait.sh
-
-      - name: Check the Hub
-        run: curl http://localhost:4444/ui
-
-      - name: Install Selenium Client
-        run: pip install -U selenium
+      - name: Selenium Preparation
+        run: |
+          docker run --network=isolated -d -p 4444:4444 -p 7900:7900 \
+          -v /dev/shm:/dev/shm --name selenium \
+          selenium/standalone-firefox:latest
 
       - name: Run test
         run: python tests/hello_aut.py ${{ env.URL }} ${{ matrix.browser }}
@@ -68,5 +58,12 @@ jobs:
           name: Screenshot-${{ matrix.browser }}
           path: screenshot.png
 
-      - name: stop docker
-        run: docker stop docker-apache
+      - name: Run test
+        run: python tests/hello_aut.py ${{ env.URL }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshot
+          path: screenshot.png
+          path: screenshot.png
