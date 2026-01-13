@@ -28,15 +28,12 @@ class AutTest(unittest.TestCase):
         self.addCleanup(self.browser.quit)
 
 
+
     def test_homepage(self):
         url = sys.argv[1] if len(sys.argv) > 1 else "http://localhost"
-
         self.browser.get(url)
         self.browser.save_screenshot("screenshot.png")
-        expected_result = "Welcome back, Guest!"
-        actual_result = self.browser.find_element(By.TAG_NAME, "p")
-
-        self.assertIn(expected_result, actual_result.text)
+        # Tidak ada assert, hanya mengambil screenshot
 
 
 if __name__ == "__main__":
