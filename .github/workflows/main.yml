@@ -1,48 +1,36 @@
-name: OTF Testing
+name: OTT Testing
 
 on:
   push:
-    branches: [ "main", "master" ]
-
-permissions:
-  contents: read
+    branches:
+      - main
 
 jobs:
   test:
     name: Functional Test
+    permissions: write-all
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout the repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+    - name: Checkout the repo
+      uses: actions/checkout@v4
 
-      - name: Build AUT
-        run: docker build -t my-php-site:latest .
+    - name: Create isolated network
+      run: docker network create --driver bridge isolated
 
-      - name: Run AUT
-        run: docker run -p 8080:80 --name docker-apache -d my-php-site:latest
+    - name: Deploy AUT
+      run: docker build -t my-php-site:latest .
 
-      -  name: Wait AUT ready
-  run: |
-    for i in {1..30}; do
-      code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 || true)
-      echo "HTTP $code"
-      if [ "$code" != "000" ]; then
-        echo "AUT responding"
-        exit 0
-      fi
-      echo "Waiting AUT..."
-      sleep 2
-    done
-    echo "AUT not responding"
-    exit 1
+    - name: Run AUT
+      run: docker run --network=isolated -p 80:80 --name docker-apache -t -d my-php-site:latest
 
+    - name: Get AUT URL
+      run: |
+        URL=http://$(ip -f inet -o addr show docker0 | awk '{print $4}' | cut -d '/' -f 1)
+        echo "URL=$URL" >> $GITHUB_ENV
 
-      - name: Check AUT Url
-        run: curl -v http://localhost:8080
+    - name: Check AUT Url
+      run: curl ${{ env.URL }}
 
-      - name: Stop docker
-        if: always()
-        run: docker rm -f docker-apache
+    - name: stop docker
+      run: docker stop docker-apache
