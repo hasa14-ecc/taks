@@ -5,10 +5,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Functional Test
-    permissions: write-all
     runs-on: ubuntu-latest
 
     steps:
@@ -22,15 +24,13 @@ jobs:
         run: docker build -t my-php-site:latest .
 
       - name: Run AUT
-        run: docker run --network=isolated -p 80:80 --name docker-apache -d my-php-site:latest
+        run: docker run --network=isolated -d --name docker-apache my-php-site:latest
 
-      - name: Get AUT URL
-        run: |
-          URL=http://$(ip -f inet -o addr show docker0 | awk '{print $4}' | cut -d '/' -f 1)
-          echo "URL=$URL" >> $GITHUB_ENV
+      - name: Set AUT URL
+        run: echo "URL=http://docker-apache" >> $GITHUB_ENV
 
-      - name: Check AUT Url
-        run: curl ${{ env.URL }}
+      - name: Check AUT Url (inside container)
+        run: docker exec docker-apache curl -s http://localhost
 
       - name: Selenium Preparation
         run: docker run --network=isolated -d -p 4444:4444 -p 7900:7900 -v /dev/shm:/dev/shm --name firefox-standalone selenium/standalone-firefox:latest
@@ -47,5 +47,9 @@ jobs:
       - name: Run test
         run: python tests/hello_aut.py ${{ env.URL }}
 
-      - name: Stop docker
-        run: docker stop docker-apache
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f docker-apache || true
+          docker rm -f firefox-standalone || true
+          docker network rm isolated || true
