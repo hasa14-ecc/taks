@@ -45,7 +45,11 @@ jobs:
       run: pip install -U selenium
 
     - name: Run test
-      run: python tests/hello_aut.py ${{env.URL}} ${{matrix.browser}}
+      run: python tests/hello_aut.py ${{ env.URL }}
 
-    - name: stop docker
-      run: docker stop docker-apache
+    - name: Cleanup
+      if: always()
+      run: |
+          docker rm -f docker-apache || true
+          docker rm -f firefox-standalone || true
+          docker network rm isolated || tru

@@ -22,7 +22,7 @@ class AutTest(unittest.TestCase):
         if len(sys.argv) > 1:
             url = sys.argv[1]
         else:
-            url = "http://localhost"
+            url = "http://docker-apache"
 
         self.browser.get(url)
 
