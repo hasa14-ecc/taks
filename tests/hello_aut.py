@@ -31,5 +31,5 @@ class AutTest(unittest.TestCase):
         actual_result = self.browser.find_element(By.TAG_NAME, 'p').text
         self.assertIn(expected_result, actual_result)
 
-if name == 'main':
+if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], verbosity=2, warnings='ignore')
