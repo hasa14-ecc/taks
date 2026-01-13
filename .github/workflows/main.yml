@@ -8,10 +8,7 @@ jobs:
     name: Functional Test
     permissions: write-all
     runs-on: ubuntu-latest
-    strategy:
-        fail-fast: false
-        matrix:
-            browser: [firefox, chrome, edge]
+  
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
@@ -47,12 +44,6 @@ jobs:
 
       - name: Run test
         run: python tests/hello_aut.py ${{env.URL}} ${{matrix.browser}}
-
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v4
-        with:
-            name: Screenshot
-            path: homepage.png
         
       - name: stop docker
         run: docker stop docker-apache
