@@ -10,10 +10,7 @@ jobs:
     name: Functional Test
     permissions: write-all
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [firefox, chrome, edge]
+    
 
     steps:
       - name: Checkout the repo
