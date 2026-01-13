@@ -1,12 +1,12 @@
 name: OTF Testing
+
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  workflow_dispatch:
+
 jobs:
   test:
-    name: Functional Test
-    permissions: write-all
     runs-on: ubuntu-latest
 
     steps:
@@ -16,40 +16,56 @@ jobs:
       - name: Create isolated network
         run: docker network create --driver bridge isolated
 
-      - name: Deploy AUT
+      - name: Build AUT image
         run: docker build -t my-php-site:latest .
 
-      - name: Run AUT
-        run: docker run --network=isolated -p 80:80 --name docker-apache -t -d my-php-site:latest
-
-      - name: Get AUT URL
-        run: |
-          URL=http://$(ip -f inet -o addr show docker0 | awk '{print $4}' | cut -d '/' -f 1)
-          echo "URL=$URL" >> $GITHUB_ENV
+      - name: Run AUT container
+        run: docker run -d --network=isolated -p 8080:80 --name docker-apache my-php-site:latest
 
       - name: Check AUT Url
-        run: curl ${{ env.URL }}
+        run: curl -i http://localhost:8080 | head -n 30
 
       - name: Selenium Preparation
-        run: docker run --network=isolated -d -p 4444:4444 -p 7900:7900 -v /dev/shm:/dev/shm --name ${{ matrix.browser }}-standalone selenium/standalone-${{ matrix.browser }}:latest
-     
-      - name: Wait for selenium
-        run: sh wait.sh
+        run: docker run --network=isolated -d -p 4444:4444 -p 7900:7900 -v /dev/shm:/dev/shm --name firefox-standalone selenium/standalone-firefox:latest
 
-      - name: Check the hub
-        run: curl http://localhost:4444/ui
+      - name: Wait for Selenium Hub and AUT
+        run: |
+          echo "Waiting for Selenium Hub..."
+          for i in $(seq 1 60); do
+            if curl -s http://localhost:4444/wd/hub/status | grep -q "ready"; then
+              echo "Selenium Hub is ready!"
+              break
+            fi
+            sleep 1
+          done
+          echo "Waiting for AUT..."
+          for i in $(seq 1 60); do
+            if curl -s http://localhost:8080 > /dev/null 2>&1; then
+              echo "AUT is ready!"
+              break
+            fi
+            sleep 1
+          done
 
-      - name: Install Selenium client
-        run: pip install -U selenium
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Selenium
+        run: pip install selenium
 
       - name: Run test
-        run: python tests/hello_aut.py ${{env.URL}} ${{matrix.browser}}
+        run: python tests/hello_aut.py http://docker-apache
 
-      - name: 'Upload Artifact'
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-            name: Screenshot
-            path: homepage.png
-        
-      - name: stop docker
-        run: docker stop docker-apache
+          name: Screenshot
+          path: screenshot.png
+
+      - name: Stop docker
+        if: always()
+        run: |
+          docker stop firefox-standalone  true
+          docker stop docker-apache  true
