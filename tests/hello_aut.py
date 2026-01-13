@@ -12,23 +12,26 @@ class AutTest(unittest.TestCase):
         options.add_argument('--ignore-certificate-errors')
         server = "http://localhost:4444"
 
+        # Konfigurasi umum (SSL ignore)
+        options.add_argument('--ignore-ssl-errors=yes')
+        options.add_argument('--ignore-certificate-errors')
+        
+        server = 'http://localhost:4444'
+
         self.browser = webdriver.Remote(command_executor=server, options=options)
         self.addCleanup(self.browser.quit)
 
     def test_homepage(self):
+        # Ambil URL dari argumen ke-1
         if len(sys.argv) > 1:
             url = sys.argv[1]
         else:
-            url = "http://docker-apache"
-
-        # Ensure proper URL format
-        if not url.startswith('http'):
-            url = "http://" + url
+            url = "http://localhost"
 
         self.browser.get(url)
         expected_result = "Welcome back, Guest!"
-        actual_result = self.browser.find_element(By.TAG_NAME, 'p').text
-        self.assertIn(expected_result, actual_result)
+        actual_result = self.browser.find_element(By.TAG_NAME, 'p')
+        self.assertIn(expected_result, actual_result.text)
 
-if name == 'main':
+if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], verbosity=2, warnings='ignore')
