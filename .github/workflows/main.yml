@@ -24,9 +24,10 @@ jobs:
     - name: Run AUT
       run: docker run --network=isolated -p 80:80 --name docker-apache -t -d my-php-site:latest
 
-    - name: Set AUT URL
-      run: echo "URL=http://docker-apache" >> $GITHUB_ENV
-
+    - name: Get AUT URL
+      run: |
+        URL=http://$(ip -f inet -o addr show docker0 | awk '{print $4}' | cut -d '/' -f 1)
+        echo "URL=$URL" >> $GITHUB_ENV
 
     - name: Check AUT Url
       run: curl ${{ env.URL }}
@@ -46,9 +47,5 @@ jobs:
     - name: Run test
       run: python tests/hello_aut.py ${{ env.URL }}
 
-    - name: Cleanup
-      if: always()
-      run: |
-          docker rm -f docker-apache || true
-          docker rm -f firefox-standalone || true
-          docker network rm isolated || tru
+    - name: stop docker
+      run: docker stop docker-apache
