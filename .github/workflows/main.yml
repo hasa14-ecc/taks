@@ -1,17 +1,16 @@
-name: OTF Testing
+name: OTT Testing
+
 on:
   push:
     branches:
       - main
+
 jobs:
   test:
     name: Functional Test
     permissions: write-all
     runs-on: ubuntu-latest
-    strategy:
-        fail-fast: false
-        matrix:
-            browser: [firefox, chrome, edge]
+
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
@@ -47,6 +46,6 @@ jobs:
 
       - name: Run test
         run: python tests/hello_aut.py ${{env.URL}} ${{matrix.browser}}
-        
+
       - name: stop docker
         run: docker stop docker-apache
