@@ -1,4 +1,4 @@
-name: OTF Testing
+name: OTT Testing
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
       run: pip install -U selenium
 
     - name: Run test
-      run: python tests/hello_aut.py ${{ env.URL }}
+      run: python tests/hello_aut.py
 
     - name: stop docker
       run: docker stop docker-apache

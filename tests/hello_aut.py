@@ -10,6 +10,8 @@ class AutTest(unittest.TestCase):
         options = webdriver.FirefoxOptions()
         options.add_argument('--ignore-ssl-errors=yes')
         options.add_argument('--ignore-certificate-errors')
+
+        # Selenium Hub
         server = "http://localhost:4444"
 
         self.browser = webdriver.Remote(
@@ -19,9 +21,11 @@ class AutTest(unittest.TestCase):
         self.addCleanup(self.browser.quit)
 
     def test_homepage(self):
+        # Ambil URL dari argument workflow
         if len(sys.argv) > 1:
             url = sys.argv[1]
         else:
+            # DEFAULT YANG BENAR UNTUK DOCKER NETWORK
             url = "http://localhost"
 
         self.browser.get(url)
