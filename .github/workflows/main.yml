@@ -10,7 +10,6 @@ jobs:
     name: Functional Test
     permissions: write-all
     runs-on: ubuntu-latest
-    
 
     steps:
       - name: Checkout the repo
@@ -35,28 +34,19 @@ jobs:
 
       - name: Selenium Preparation
         run: |
-          if [ "${{ matrix.browser }}" = "firefox" ]; then
-            docker run --network=isolated -d -p 4444:4444 -p 7900:7900 \
-            -v /dev/shm:/dev/shm --name selenium \
-            selenium/standalone-firefox:latest
-          elif [ "${{ matrix.browser }}" = "chrome" ]; then
-            docker run --network=isolated -d -p 4444:4444 -p 7900:7900 \
-            -v /dev/shm:/dev/shm --name selenium \
-            selenium/standalone-chrome:latest
-      - name: Selenium Preparation
-        run: |
           docker run --network=isolated -d -p 4444:4444 -p 7900:7900 \
           -v /dev/shm:/dev/shm --name selenium \
           selenium/standalone-firefox:latest
 
-      - name: Run test
-        run: python tests/hello_aut.py ${{ env.URL }} ${{ matrix.browser }}
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Screenshot-${{ matrix.browser }}
-          path: screenshot.png
+      - name: Wait for Selenium Hub
+        run: sh wait.sh
+
+      - name: Check the Hub
+        run: curl http://localhost:4444/ui
+
+      - name: Install Selenium Client
+        run: pip install -U selenium
 
       - name: Run test
         run: python tests/hello_aut.py ${{ env.URL }}
@@ -66,4 +56,6 @@ jobs:
         with:
           name: Screenshot
           path: screenshot.png
-          path: screenshot.png
+
+      - name: stop docker
+        run: docker stop docker-apache
